@@ -1,37 +1,235 @@
-## Welcome to GitHub Pages
+# 一、二叉树
 
-You can use the [editor on GitHub](https://github.com/CARLOSGP2021/how-to-buy-laptop/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+## 解题方法
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+1️⃣ 遇到二叉树的题目，如何去思考？或者说有没有思考的框架呢？
 
-### Markdown
+- **是否可以通过遍历一遍二叉树得到答案**？如果可以，用一个 `traverse` 函数配合外部变量来实现，这叫「遍历」的思维模式。
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+- **是否可以定义一个递归函数，通过子问题（子树）的答案推导出原问题的答案**？如果可以，写出这个递归函数的定义，并充分利用这个函数的返回值，这叫「**分解问题**」的思维模式。
 
-```markdown
-Syntax highlighted code block
+无论使用哪种思维模式，你都需要思考：
 
-# Header 1
-## Header 2
-### Header 3
+**如果单独抽出一个二叉树节点，它需要做什么事情？需要在什么时候（前/中/后序位置）做**？其他的节点不用你操心，递归函数会帮你在所有节点上执行相同的操作。
 
-- Bulleted
-- List
+2️⃣ 如何正确地理解**前中后序遍历**呢？
 
-1. Numbered
-2. List
+**前中后序是遍历二叉树过程中处理每一个节点的三个特殊时间点**，绝不仅仅是三个顺序不同的 List：
 
-**Bold** and _Italic_ and `Code` text
+- 前序位置的代码在刚刚进入一个二叉树节点的时候执行；
+- 后序位置的代码在将要离开一个二叉树节点的时候执行；
+- 中序位置的代码在一个二叉树节点左子树都遍历完，即将开始遍历右子树的时候执行。
 
-[Link](url) and ![Image](src)
+<div align=center><img src="https://fastly.jsdelivr.net/gh/CARLOSGP2021/myFigures/img/202204170940278.png" alt="image-20220417094016966" style="zoom:50%;" /></div>
+
+<div align=center><img src="https://fastly.jsdelivr.net/gh/CARLOSGP2021/myFigures/img/202204170942506.png" alt="image-20220417094235414" style="zoom:60%;" /></div>
+
+3️⃣前序位置和后序位置的代码有什么区别？后序位置有什么特殊之处？
+
+前序位置的代码只能从函数参数中获取父节点传递来的数据，而后序位置的代码不仅可以获取参数数据，还可以获取到**子树**通过函数返回值传递回来的数据。
+
+🔥总结：二叉树的所有问题，就是让你在前中后序位置注入巧妙的代码逻辑，去达到自己的目的，**你只需要单独思考每一个节点应该做什么**，其他的不用你管，抛给二叉树遍历框架，递归会在所有节点上做相同的操作。
+
+## 二叉树深度
+
+### 104、求二叉树最大深度
+
+二叉树的深度为根节点到最远叶子节点的最长路径上的节点数，叶子节点是指没有子节点的节点。
+
+**示例：** 
+给定二叉树`[3,9,20,null,null,15,7]`，
+
+```php
+    3
+   / \
+  9  20
+    /  \
+   15   7
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+返回它的最大深度 3。
 
-### Jekyll Themes
+**解法一**：递归遍历二叉树，回溯算法思路
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/CARLOSGP2021/how-to-buy-laptop/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+遍历一遍二叉树，用一个外部变量记录**每个节点**所在的深度，取最大值就可以得到最大深度。
 
-### Support or Contact
+```php
+class Solution {
+public:
+    int depth = 0;
+    int res = 0;
+    int maxDepth(TreeNode* root) {
+        traverse(root);
+        return res;
+    }
+    //遍历二叉树
+    void traverse(TreeNode* root){
+		if(root == nullptr){
+            return;
+        }
+        //前序遍历位置
+        depth++;
+        //遍历过程中记录最大深度
+        res = max(depth, res);
+        traverse(root->left);
+        traverse(root->right);
+        //后序遍历位置
+        depth--;
+    }
+};
+```
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+**解法二**：分解成子树问题，动态规划思路
+
+```php
+class Solution {
+public:
+    // 定义：输入一个节点，返回以该节点为根的二叉树的最大深度
+    int maxDepth(TreeNode* root) {
+		if(root == nullptr){
+            return 0;
+        }
+        int leftDepth = maxDepth(root->left);
+        int rightDepth = maxDepth(root->right);
+        // 根据左右子树的最大深度推出原二叉树的最大深度
+        return max(leftDepth, rightDepth) + 1;
+    }
+};
+```
+
+**解法三**：层序遍历
+
+```php
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+		int depth = 0;
+        queue<TreeNode*> que;
+        if(root) que.push(root);
+        while(!que.empty()){
+            int size = que.size();
+            depth++;
+            for(int i = 0; i < size; i++){
+                TreeNode* node = que.front();
+                que.pop();
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right);
+            }
+        }
+        return depth;
+    }
+};
+```
+
+求二叉树的最大深度可以延伸到求二叉树的直径：
+
+### 543、二叉树直径
+
+给定一棵二叉树，你需要计算它的直径长度。一棵二叉树的直径长度是任意两个结点路径长度中的最大值。这条路径可能穿过也可能不穿过根结点。
+
+**示例 :**
+给定二叉树
+
+```php
+          1
+         / \
+        2   3
+       / \     
+      4   5    
+```
+
+返回 **3**, 它的长度是路径 [4,2,1,3] 或者 [5,2,1,3]。
+
+每一条二叉树的「**直径**」长度，就是一个节点的左右子树的**最大深度之和**。把计算「直径」的逻辑放在**后序位置**，准确说应该是放在 `maxDepth` 的后序位置，因为 `maxDepth` 的后序位置是知道左右子树的最大深度的。
+
+```php
+class Solution {
+public:
+    int maxDiameter = 0;
+    int diameterOfBinaryTree(TreeNode* root) {
+		maxDepth(root);
+        return maxDiameter;       
+    }
+    
+    //定义：输入一个节点，返回以该节点为根节点的二叉树的深度
+    int maxDepth(TreeNode* root){
+		if(root == nullptr){
+            return 0;
+        }
+        int leftDepth = maxDepth(root->left);
+        int rightDepth = maxDepth(root->right);
+        // 后序位置，顺便计算最大直径
+        maxDiameter = max(leftDepth + rightDepth, maxDiameter);
+        return max(leftDepth, rightDepth) + 1;
+    }
+};
+```
+
+### 111、二叉树的最小深度
+
+给定一个二叉树，找出其最小深度。最小深度是从根节点到最近叶子节点的最短路径上的节点数量。
+
+**示例**：给定二叉树`[3，9，20，null，null，15，7]`：
+
+```php
+      3
+     / \
+    9  20
+       / \     
+      15  7    
+```
+
+返回它的最小深度2。
+
+**解法一**：分解成子树问题，动态规划思想
+
+```php
+class Solution {
+public:
+    //定义：输入一个节点，返回以该节点为根节点的二叉树的最小深度
+    int minDepth(TreeNode* root) {
+		if(!root) {
+            return 0;
+        }
+        int leftDepth = minDepth(root->left);
+        int rightDepth = minDepth(root->right);
+        return min(leftDepth, rightDepth) + 1;        
+    }    
+};
+```
+
+❓**上面的算法对吗？为什么？**
+
+❎错误！这个代码就犯了此图中的误区：
+
+<div align=center><img src="https://fastly.jsdelivr.net/gh/CARLOSGP2021/myFigures/img/202204171128504.png" alt="111.二叉树的最小深度" style="zoom:50%;" /></div>
+
+如果这么求的话，**没有左孩子的分支会算为最短深度**。
+
+所以，如果左子树为空，右子树不为空，说明最小深度是 1 + 右子树的深度；
+
+反之，右子树为空，左子树不为空，最小深度是 1 + 左子树的深度；
+
+最后如果左右子树都不为空，返回左右子树深度最小值 + 1 。
+
+✅**正确的解法一**：分解成子树问题，动态规划思想
+
+```php
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+		if(!root){
+            return 0;
+        }
+        int leftDepth = minDepth(root->left);
+        int rightDepth = minDepth(root->right);
+        if(!root->left){
+            return rightDepth + 1;
+        }
+        if(!root->right){
+            return leftDepth + 1;
+        }
+        return min(leftDepth, rightDepth) + 1;
+    }
+};
+```
